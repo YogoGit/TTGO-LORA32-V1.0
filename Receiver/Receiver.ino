@@ -23,13 +23,29 @@ SSD1306 display(0x3c, OLED_SDA, OLED_SCL);
 
 // Forward declarations
 void displayLoraData(int packetSize, String packet, String rssi);
+void pktRecvTask(void *parm);
 void showLogo();
+
+TaskHandle_t recvLedTask;
+volatile bool blinkNow;
 
 void setup() {
   Serial.begin(115200);
   while (!Serial);
   Serial.println();
   Serial.println("LoRa Receiver");
+
+  // Create a new task on the second core to blink the LED when packets
+  // are received.  After creation, give it a bit of time to startup
+  xTaskCreatePinnedToCore(
+    pktRecvTask,
+    "pktRecvTask",
+    1000,
+    NULL,
+    1,
+    &recvLedTask,
+    1);
+    delay(500);
 
   // Configure OLED by setting the OLED Reset HIGH, LOW, and then back HIGH
   pinMode(OLED_RST, OUTPUT);
@@ -76,6 +92,7 @@ void loop() {
     String rssi = "RSSI " + String(LoRa.packetRssi(), DEC) ;
     Serial.println(rssi);
 
+    blinkNow = true;
     displayLoraData(packetSize, packet, rssi);
   }
   delay(10);
@@ -91,6 +108,25 @@ void displayLoraData(int packetSize, String packet, String rssi) {
   display.drawStringMaxWidth(0 , 26 , 128, packet);
   display.drawString(0, 0, rssi);
   display.display();
+}
+
+void pktRecvTask(void *parm) {
+  static const int BLINK_TIME_MS = 250;
+    
+  // Run forever
+  pinMode(LED_BUILTIN, OUTPUT);
+  while (1) {
+    // Use the second core to blink the LED when we receive a packet
+    if (blinkNow) {
+      // toggle the led to give a visual indication the packet was sent
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(BLINK_TIME_MS);
+      digitalWrite(LED_BUILTIN, LOW);
+
+      // Done blinking, wait for the next packet
+      blinkNow = false;
+    }
+  }
 }
 
 void showLogo() {
