@@ -2,22 +2,66 @@ TTGO V1.0
 ==============================
 As purchased from [here](https://www.banggood.com/2Pcs-Wemos-TTGO-LORA32-868915Mhz-ESP32-LoRa-OLED-0_96-Inch-Blue-Display-p-1239769.html).
 
+## Install PlatformIO (command line)
+
+[PlatformIO](https://platformio.org/)
+
+https://docs.platformio.org/en/latest/installation.html#installer-script
+
 ## Install the following Arduino libraries:
 - [arduino-LoRa](https://github.com/sandeepmistry/arduino-LoRa)
 - [oled-ssd1306](https://github.com/ThingPulse/esp8266-oled-ssd1306)
 
 ## Start
-- In the Arduino sketches, ensure that the radio frequency you are using is commented/uncommented correctly
+- In both the sender and receiver directories, the source code lives
+  in the 'src' directory.  Inside each of the directories, the file
+  *main.cpp* is the program for the appropriate task.  In *main.cpp*,
+  ensure that the radio frequency you are using is commented/uncommented
+  correctly.
     ```
     //#define LORA_BAND  433
     //#define LORA_BAND  868
     #define LORA_BAND  915
     ```
 
-In the Arduino IDE, I chose the board 'TTGO LoRa32-OLED V1', compiled the sketch
-to verify it works, and then uploaded to the board.  You'll need two boards,
-one to send, and one to receive. Ensure the LORA_BAND matches in both sketches
-otherwise they won't be able to communicate.
+## Background (not necessary, as this is done already in this repo)
+
+In PlatformIO, I hard-coded the configuration for the board.  You won't need
+to do this, but it was simple and all I did was run the following command.
+   ```
+   % platformio init --board ttgo-lora32-v1
+   ```
+
+Then, I added the two libraries that this uses as library dependencies in the
+same file.  If the routine doesn't automatically install them, use the commands.
+   ```
+   % platformio lib install"ESP8266_SSD1306"
+   % platformio lib install"LoRa"
+   ```
+
+## Build
+  To build is pretty easy (and fast), just run:
+   ```
+   % platformio run
+   Processing ttgo-lora32-v1 (platform: espressif32; board: ttgo-lora32-v1; framework: arduino)
+   ...
+   Building .pioenvs/ttgo-lora32-v1/firmware.bin
+   Checking size .pioenvs/ttgo-lora32-v1/firmware.elf
+   Memory Usage -> http://bit.ly/pio-memory-usage
+   DATA:    [          ]   4.5% (used 14900 bytes from 327680 bytes)
+   PROGRAM: [==        ]  16.2% (used 212516 bytes from 1310720 bytes)
+   ========================= [SUCCESS] Took 4.01 seconds =========================
+   ```
+
+## Upload
+  Similar to build, just with an additional argument
+   ```
+   % platformio run --upload
+   ```
+ 
+## Notes
+You'll need two boards, one to send, and one to receive. Ensure the LORA_BAND
+is the same in both sketches otherwise they won't be able to communicate.
 
 ## Case
 I designed a case based on the designs of similar cases on Thingiverse, which
