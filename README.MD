@@ -46,7 +46,7 @@ is the same in both sketches otherwise they won't be able to communicate.
 I designed a case based on the designs of similar cases on Thingiverse, which
 includes a spot for the antenna.  It's a tight fit, but it should work fine.
 
-[case](https://www.thingiverse.com/thing:3443245)
+[3D printable case](https://www.thingiverse.com/thing:3443245)
 
 ## References
 - https://github.com/lewisxhe/TTGO-LoRa-Series
