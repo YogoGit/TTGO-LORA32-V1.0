@@ -22,7 +22,7 @@
 SSD1306 display(0x3c, OLED_SDA, OLED_SCL);
 
 // Forward declarations
-void displayLoraData(int packetSize, String packet, String rssi);
+void displayLoraData(String countStr);
 void showLogo();
 
 void setup() {
