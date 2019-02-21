@@ -83,6 +83,9 @@ void setup() {
 }
 
 void loop() {
+  static unsigned long lastRecvTime = 0;
+
+  unsigned long now = millis();
   int packetSize = LoRa.parsePacket();
   if (packetSize) {
     String packet = "";
@@ -92,10 +95,12 @@ void loop() {
     String rssi = "RSSI " + String(LoRa.packetRssi(), DEC) ;
     Serial.println(rssi);
 
-    blinkNow = true;
     displayLoraData(packetSize, packet, rssi);
+    blinkNow = true;
+    lastRecvTime = now;
+  } else if (now - lastRecvTime > 10 * 1000) {
+      displayLoraData(0, "", "NoData: (Timeout)");
   }
-  delay(10);
 }
 
 void displayLoraData(int packetSize, String packet, String rssi) {
