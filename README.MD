@@ -18,21 +18,6 @@ https://docs.platformio.org/en/latest/installation.html#installer-script
     #define LORA_BAND  915
     ```
 
-## Background (not necessary, as this is done already in this repo)
-
-In PlatformIO, I hard-coded the configuration for the board.  You won't need
-to do this, but it was simple and all I did was run the following command.
-   ```
-   % platformio init --board ttgo-lora32-v1
-   ```
-
-Then, I added the two libraries that this uses as library dependencies in the
-same file.  If the routine doesn't automatically install them, use the commands.
-   ```
-   % platformio lib install"ESP8266_SSD1306"
-   % platformio lib install"LoRa"
-   ```
-
 ## Build
   To build is pretty easy (and fast), just run:
    ```
@@ -68,3 +53,18 @@ includes a spot for the antenna.  It's a tight fit, but it should work fine.
 - https://github.com/LilyGO/TTGO-LORA32-V2.0
 - https://github.com/LilyGO/LORA-ESP32-OLED
 - https://github.com/SensorsIot/LoRa-Board-Test-2
+
+## Background (not necessary, as this is done already in this repo)
+
+In PlatformIO, I hard-coded the configuration for the board.  You won't need
+to do this, but it was simple and all I did was run the following command.
+   ```
+   % platformio init --board ttgo-lora32-v1
+   ```
+
+Then, I added the two libraries that this uses as library dependencies in the
+same file.  If the routine doesn't automatically install them, use the commands.
+   ```
+   % platformio lib install"ESP8266_SSD1306"
+   % platformio lib install"LoRa"
+   ```
