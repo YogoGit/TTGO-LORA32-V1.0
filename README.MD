@@ -2,15 +2,9 @@ TTGO V1.0
 ==============================
 As purchased from [here](https://www.banggood.com/2Pcs-Wemos-TTGO-LORA32-868915Mhz-ESP32-LoRa-OLED-0_96-Inch-Blue-Display-p-1239769.html).
 
-## Install PlatformIO (command line)
-
-[PlatformIO](https://platformio.org/)
+## Install [PlatformIO](https://platformio.org/) (command line)
 
 https://docs.platformio.org/en/latest/installation.html#installer-script
-
-## Install the following Arduino libraries:
-- [arduino-LoRa](https://github.com/sandeepmistry/arduino-LoRa)
-- [oled-ssd1306](https://github.com/ThingPulse/esp8266-oled-ssd1306)
 
 ## Start
 - In both the sender and receiver directories, the source code lives
