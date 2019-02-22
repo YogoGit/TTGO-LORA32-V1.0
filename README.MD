@@ -35,7 +35,7 @@ https://docs.platformio.org/en/latest/installation.html#installer-script
 ## Upload
   Similar to build, just with an additional argument
    ```
-   % platformio run --upload
+   % platformio run -t upload
    ```
  
 ## Notes
