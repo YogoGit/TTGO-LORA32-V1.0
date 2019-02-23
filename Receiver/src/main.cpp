@@ -17,7 +17,6 @@ void pktRecvTask(void *parm);
 void showLogo();
 
 TaskHandle_t recvLedTask;
-volatile bool blinkNow;
 
 void setup() {
   Serial.begin(115200);
@@ -88,8 +87,10 @@ void loop() {
     Serial.println(rssi);
 
     displayLoraData(packetSize, packet, rssi);
-    blinkNow = true;
     lastRecvTime = now;
+
+    // Wakeup the blink task
+    vTaskNotifyGiveFromISR(recvLedTask, NULL);
   } else if (now - lastRecvTime > 10 * 1000) {
       displayLoraData(0, "", "NoData: (Timeout)");
   }
@@ -107,22 +108,20 @@ void displayLoraData(int packetSize, String packet, String rssi) {
   display.display();
 }
 
+// Use the second core to blink the LED when we receive a packet
 void pktRecvTask(void *parm) {
   static const int BLINK_TIME_MS = 250;
     
   // Run forever
   pinMode(LED_BUILTIN, OUTPUT);
   while (1) {
-    // Use the second core to blink the LED when we receive a packet
-    if (blinkNow) {
-      // toggle the led to give a visual indication the packet was sent
-      digitalWrite(LED_BUILTIN, HIGH);
-      delay(BLINK_TIME_MS);
-      digitalWrite(LED_BUILTIN, LOW);
+    // Wait for a notification
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-      // Done blinking, wait for the next packet
-      blinkNow = false;
-    }
+    // toggle the led to give a visual indication the packet was sent
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(BLINK_TIME_MS);
+    digitalWrite(LED_BUILTIN, LOW);
   }
 }
 
