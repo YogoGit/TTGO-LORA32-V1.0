@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <SSD1306Wire.h>
@@ -9,14 +10,25 @@
 //#define LORA_BAND    868
 #define LORA_BAND    915
 
+// Global variable declarations
 SSD1306Wire display(0x3c, OLED_SDA, OLED_SCL);
 
-// Forward declarations
-void displayLoraData(int packetSize, String packet, String rssi);
-void pktRecvTask(void *parm);
-void showLogo();
+TaskHandle_t pktDisplayTask;
 
-TaskHandle_t recvLedTask;
+typedef struct {
+   int packetSize;
+   char rssiStr[128];
+   char packetBuff[4096];
+} Packet;
+
+Packet pkt;
+volatile unsigned long lastRecvTime = millis();
+
+// Forward method declarations
+void onReceive(int packetSize);
+void pktDisplay(void *parm);
+void displayLoraPacket();
+void showLogo();
 
 void setup() {
   Serial.begin(115200);
@@ -28,29 +40,30 @@ void setup() {
   // Create a new task on the second core to blink the LED when packets
   // are received.  After creation, give it a bit of time to startup
   xTaskCreatePinnedToCore(
-    pktRecvTask,
-    "pktRecvTask",
+    pktDisplay,
+    "pktDisplayTask",
     1000,
     NULL,
     1,
-    &recvLedTask,
+    &pktDisplayTask,
     1);
   delay(500);
 
   // Configure OLED by setting the OLED Reset HIGH, LOW, and then back HIGH
   pinMode(OLED_RST, OUTPUT);
   digitalWrite(OLED_RST, HIGH);
-  delay(100);
+  delay(50);
   digitalWrite(OLED_RST, LOW);
-  delay(100);
+  delay(50);
   digitalWrite(OLED_RST, HIGH);
-
   display.init();
   display.flipScreenVertically();
 
+  // LoRa image
   showLogo();
   delay(2000);
 
+  // Indicate which function this device is running
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
@@ -69,60 +82,72 @@ void setup() {
   Serial.println("init ok");
 
   // Set the radio into receive mode
+  LoRa.onReceive(onReceive);
   LoRa.receive();
-  delay(1500);
 }
 
 void loop() {
-  static unsigned long lastRecvTime = 0;
-
-  unsigned long now = millis();
-  int packetSize = LoRa.parsePacket();
-  if (packetSize) {
-    String packet = "";
-    for (int i = 0; i < packetSize; i++) {
-      packet += (char)LoRa.read();
-    }
-    String rssi = "RSSI " + String(LoRa.packetRssi(), DEC) ;
-    Serial.println(rssi);
-
-    displayLoraData(packetSize, packet, rssi);
-    lastRecvTime = now;
-
+  // If we don't get data in a timely fashion, indicate it on the screen
+  if (millis() - lastRecvTime > 5 * 1000) {
+    pkt.packetSize = 0;
     // Wakeup the blink task
-    vTaskNotifyGiveFromISR(recvLedTask, NULL);
-  } else if (now - lastRecvTime > 10 * 1000) {
-      displayLoraData(0, "", "NoData: (Timeout)");
+    vTaskNotifyGiveFromISR(pktDisplayTask, NULL);
   }
+  delay(100);
 }
 
-void displayLoraData(int packetSize, String packet, String rssi) {
-  String packSize = String(packetSize, DEC);
+void onReceive(int packetSize) {
+  for (int i = 0; i < packetSize; i++) {
+    pkt.packetBuff[i] = (char)LoRa.read();
+  }
+  pkt.packetBuff[packetSize] = '\0';
+  sprintf(pkt.rssiStr, "RSSI %d", LoRa.packetRssi());
+  Serial.println(pkt.rssiStr);
 
-  display.clear();
-  display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.setFont(ArialMT_Plain_10);
-  display.drawString(0 , 15 , "Received " + packSize + " bytes");
-  display.drawStringMaxWidth(0 , 26 , 128, packet);
-  display.drawString(0, 0, rssi);
-  display.display();
+  // Set this as the last thing since it's used to indicate a valid packet
+  pkt.packetSize = packetSize;
+
+  // Wakeup the blink task
+  vTaskNotifyGiveFromISR(pktDisplayTask, NULL);
+
+  lastRecvTime = millis();
 }
 
 // Use the second core to blink the LED when we receive a packet
-void pktRecvTask(void *parm) {
+void pktDisplay(void *parm) {
   static const int BLINK_TIME_MS = 250;
-    
+
   // Run forever
   pinMode(LED_BUILTIN, OUTPUT);
   while (1) {
     // Wait for a notification
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-    // toggle the led to give a visual indication the packet was sent
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(BLINK_TIME_MS);
-    digitalWrite(LED_BUILTIN, LOW);
+    // Show the data on the screen
+    displayLoraPacket();
+
+    if (pkt.packetSize > 0) {
+        // toggle the led to give a visual indication the packet was sent
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(BLINK_TIME_MS);
+        digitalWrite(LED_BUILTIN, LOW);
+    }
   }
+}
+
+void displayLoraPacket() {
+  display.clear();
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.setFont(ArialMT_Plain_10);
+  if (pkt.packetSize > 0) {
+    display.drawString(0, 0, pkt.rssiStr);
+    display.drawString(0, 15, "Received " + String(pkt.packetSize, DEC) + " bytes");
+    display.drawStringMaxWidth(0, 26, 128, pkt.packetBuff);
+  } else {
+      display.drawString(0, 0, "NoData: (timeout)");
+      display.drawString(0 , 15 , "Received 0 bytes");
+  }
+  display.display();
 }
 
 void showLogo() {
