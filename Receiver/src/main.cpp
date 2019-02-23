@@ -108,7 +108,10 @@ void pktReceive(int packetSize) {
   // Set this as the last thing since it's used to indicate a valid packet
   pkt.packetSize = packetSize;
 
-  // Wakeup the blink task
+  // Wakeup the display task.  Note, we do this in a separate task since
+  // any attempts to call the display methods in this context cause the
+  // ESP32 to crash for various reasons, possibly related to SPI calls.
+  // (Can't do SPI interrupts while in an ISR?)
   vTaskNotifyGiveFromISR(pktDisplayTask, NULL);
 
   lastRecvTime = millis();
