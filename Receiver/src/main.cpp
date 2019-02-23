@@ -32,6 +32,7 @@ volatile bool blinkNow;
 void setup() {
   Serial.begin(115200);
   while (!Serial);
+
   Serial.println();
   Serial.println("LoRa Receiver");
 
@@ -45,7 +46,7 @@ void setup() {
     1,
     &recvLedTask,
     1);
-    delay(500);
+  delay(500);
 
   // Configure OLED by setting the OLED Reset HIGH, LOW, and then back HIGH
   pinMode(OLED_RST, OUTPUT);
