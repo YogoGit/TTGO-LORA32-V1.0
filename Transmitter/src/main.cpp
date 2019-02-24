@@ -71,6 +71,12 @@ void setup() {
     Serial.println("Starting LoRa failed!");
     while (1);
   }
+  // See https://github.com/sandeepmistry/arduino-LoRa/blob/master/API.md
+  LoRa.setSpreadingFactor(7);
+  LoRa.setSignalBandwidth(125 * 1000);
+  LoRa.setCodingRate4(4);
+  LoRa.setPreambleLength(8);
+  LoRa.setSyncWord(0x12);
   LoRa.enableCrc();
   Serial.println("init ok");
 }
