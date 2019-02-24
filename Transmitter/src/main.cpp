@@ -9,11 +9,18 @@
 //#define LORA_BAND    868
 #define LORA_BAND    915
 
+// How long between transmissions
+const int TRANSMISSION_PERIOD_MS = 1000;
+
 // Global variable declarations
 SSD1306Wire display(0x3c, OLED_SDA, OLED_SCL);
 
+volatile int counter = 0;
+TaskHandle_t pktDisplayTask;
+
 // Forward method declarations
-void displayLoraData(String countStr);
+void pktDisplay(void *parm);
+void displayLoraData();
 void showLogo();
 
 void setup() {
@@ -23,8 +30,17 @@ void setup() {
   Serial.println();
   Serial.println("LoRa Transmitter");
 
-  // Configure the LED an an output
-  pinMode(LED_BUILTIN, OUTPUT);
+  // Create a new task on the second core to blink the LED when packets
+  // are sent.  After creation, give it a bit of time to startup
+  xTaskCreatePinnedToCore(
+    pktDisplay,
+    "pktDisplayTask",
+    1000,
+    NULL,
+    1,
+    &pktDisplayTask,
+    1);
+  delay(500);
 
   // Configure OLED by setting the OLED Reset HIGH, LOW, and then back HIGH
   pinMode(OLED_RST, OUTPUT);
@@ -60,36 +76,57 @@ void setup() {
 }
 
 void loop() {
-  static int counter = 0;
+  static unsigned long lastTimeSent = 0;
 
-  // send packet
-  LoRa.beginPacket();
-  LoRa.print("hello ");
-  LoRa.print(counter);
-  LoRa.endPacket();
+  // Send a packet once/per second
+  if (millis() - lastTimeSent >= TRANSMISSION_PERIOD_MS) {
+    lastTimeSent = millis();
 
-  String countStr = String(counter, DEC);
-  Serial.println(countStr);
+    // send packet
+    counter++;
+    LoRa.beginPacket();
+    LoRa.print("hello ");
+    LoRa.print(counter);
+    LoRa.endPacket();
 
-  displayLoraData(countStr);
+    Serial.println(String(counter, DEC));
 
-  // toggle the led to give a visual indication the packet was sent
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(250);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(250);
-
-  counter++;
-  delay(1500);
+    // Wakeup the display task. We could do directly instead of in
+    // a separate task since loop is called by the standard thread
+    // context, but to synchronize both the transmitter and receiver
+    // code and to ensure that we send a packet once/sec, we use
+    // a secondary task for all visual transmission indications.
+    vTaskNotifyGiveFromISR(pktDisplayTask, NULL);
+  }
 }
 
-void displayLoraData(String countStr) {
+// Use the second core to blink the LED when we receive a packet
+void pktDisplay(void *parm) {
+  static const int BLINK_TIME_MS = 250;
+
+  // Run forever
+  pinMode(LED_BUILTIN, OUTPUT);
+  while (1) {
+    // Wait for a notification
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    // Show the data on the screen
+    displayLoraData();
+
+    // toggle the led to give a visual indication the packet was sent
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(BLINK_TIME_MS);
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+}
+
+void displayLoraData() {
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.setFont(ArialMT_Plain_10);
   
   display.drawString(0, 0, "Sending packet: ");
-  display.drawString(90, 0, countStr);
+  display.drawString(90, 0, String(counter, DEC));
   display.display();
 }
 
