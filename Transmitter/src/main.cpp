@@ -2,15 +2,17 @@
 #include <Wire.h>
 #include <SSD1306Wire.h>
 #include <LoRa.h>
+#include <pins_arduino.h>
 #include "images.h"
 
 //#define LORA_BAND    433
 //#define LORA_BAND    868
 #define LORA_BAND    915
 
+// Global variable declarations
 SSD1306Wire display(0x3c, OLED_SDA, OLED_SCL);
 
-// Forward declarations
+// Forward method declarations
 void displayLoraData(String countStr);
 void showLogo();
 
@@ -27,17 +29,18 @@ void setup() {
   // Configure OLED by setting the OLED Reset HIGH, LOW, and then back HIGH
   pinMode(OLED_RST, OUTPUT);
   digitalWrite(OLED_RST, HIGH);
-  delay(100);
+  delay(50);
   digitalWrite(OLED_RST, LOW);
-  delay(100);
+  delay(50);
   digitalWrite(OLED_RST, HIGH);
-
   display.init();
   display.flipScreenVertically();
 
+  // LoRa image
   showLogo();
   delay(2000);
 
+  // Indicate which function this device is running
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
