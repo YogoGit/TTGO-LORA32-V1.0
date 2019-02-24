@@ -76,7 +76,7 @@ void setup() {
   LoRa.setSignalBandwidth(125 * 1000);
   LoRa.setCodingRate4(4);
   LoRa.setPreambleLength(8);
-  LoRa.setSyncWord(0x12);
+  LoRa.setSyncWord(0x34);
   LoRa.enableCrc();
   Serial.println("init ok");
 }
