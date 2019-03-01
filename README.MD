@@ -1,5 +1,5 @@
-TTGO V1.0
-==============================
+TTGO V1.0 - Point-to-point Transmission
+=======================================
 As purchased from [here](https://www.banggood.com/2Pcs-Wemos-TTGO-LORA32-868915Mhz-ESP32-LoRa-OLED-0_96-Inch-Blue-Display-p-1239769.html).
 
 ## Install [PlatformIO](https://platformio.org/) (command line)
@@ -68,3 +68,9 @@ same file.  If the routine doesn't automatically install them, use the commands.
    % platformio lib install"ESP8266_SSD1306"
    % platformio lib install"LoRa"
    ```
+
+## Notes
+This setup uses the LoRa radios to create a point-to-point link (this could
+perhaps be used for mesh as well, but it's not designed for that). It does
+NOT use the LoRaWAN protocol, just the basic LoRa radios and protocol, so
+neither the Transmitter nor Receiver interact with LoRaWAN gateways.

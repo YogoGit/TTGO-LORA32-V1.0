@@ -28,7 +28,7 @@ void setup() {
   while (!Serial);
 
   Serial.println();
-  Serial.println("LoRa Transmitter");
+  Serial.println("LoRa P2P Transmitter");
 
   // Create a new task on the second core to blink the LED when packets
   // are sent.  After creation, give it a bit of time to startup
@@ -60,7 +60,10 @@ void setup() {
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(display.getWidth() / 2, display.getHeight() / 2, "LoRa Transmitter");
+  int centerWidth = display.getWidth() / 2;
+  int centerHeight = display.getHeight() / 2;
+  display.drawString(centerWidth, 0, "LoRa");
+  display.drawString(centerWidth, centerHeight, "P2P Transmitter");
   display.display();
   delay(2000);
 
@@ -78,7 +81,7 @@ void setup() {
   LoRa.setPreambleLength(8);
   LoRa.setSyncWord(0x34);
   LoRa.enableCrc();
-  Serial.println("init ok");
+  Serial.println("LoRa init");
 }
 
 void loop() {
